@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Drone Shots</title>
+<style>
+  /* Reset */
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background-color: #141414;
+    color: #fff;
+    overflow-x: hidden;
+  }
+  a {
+    text-decoration: none;
+    color: inherit;
+  }
+  /* Navbar */
+  .nav {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    height: 60px;
+    background-color: #141414;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.7);
+  }
+  .nav .logo {
+    font-family: 'Bebas Neue', cursive, sans-serif;
+    font-size: 28px;
+    color: #e50914;
+    font-weight: 900;
+    letter-spacing: 2px;
+    margin-right: 30px;
+  }
+  .nav ul {
+    list-style: none;
+    display: flex;
+    gap: 20px;
+  }
+  .nav ul li {
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: color 0.3s ease;
+  }
+  .nav ul li:hover {
+    color: #e50914;
+  }
+  /* Hero Banner */
+  .hero {
+    margin-top: 60px;
+    position: relative;
+    height: 60vh;
+    min-height: 400px;
+    background-size: cover;
+    background-position: center;
+    border-bottom: 8px solid #222;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 60px 40px 40px 40px;
+    color: #fff;
+  }
+  .hero::after {
+    content: "";
+    position: absolute;
+    top: 0;left: 0;right: 0;bottom: 0;
+    background: linear-gradient(to top, #141414 10%, transparent 90%);
+    pointer-events: none;
+    z-index: 1;
+  }
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 50%;
+  }
+  .hero h1 {
+    font-size: 3rem;
+    font-weight: 900;
+    margin: 0 0 15px 0;
+    text-shadow: 2px 2px 6px rgba(0,0,0,0.8);
+  }
+  .hero p {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+  }
+  .hero button {
+    background-color: #e50914;
+    border: none;
+    padding: 12px 24px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    box-shadow: 0 4px 8px rgb(229, 9, 20, 0.6);
+  }
+  .hero button:hover {
+    background-color: #f6121d;
+  }
+  /* Rows */
+  .row {
+    margin: 30px 20px 50px 20px;
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1) translateY(0);
+    transition:
+      opacity 0.5s cubic-bezier(.4,2,.6,1),
+      visibility 0.5s cubic-bezier(.4,2,.6,1),
+      transform 0.5s cubic-bezier(.4,2,.6,1);
+  }
+  .row.hide {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: scale(0.92) translateY(40px);
+  }
+  .row h2 {
+    margin-left: 10px;
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+  .row-posters {
+    display: flex;
+    overflow-x: auto;
+    padding: 20px 10px 10px 10px;
+    gap: 12px;
+    scroll-behavior: smooth;
+  }
+  .row-posters::-webkit-scrollbar {
+    height: 8px;
+  }
+  .row-posters::-webkit-scrollbar-thumb {
+    background-color: #e50914;
+    border-radius: 4px;
+  }
+  /* Poster cards */
+  .poster {
+    min-width: 160px;
+    max-width: 160px;
+    border-radius: 5px;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    box-shadow: 0 4px 8px rgb(0 0 0 / 0.7);
+  }
+  .poster img {
+    width: 100%;
+    display: block;
+    border-radius: 5px;
+  }
+  .poster:hover {
+    transform: scale(1.15);
+    z-index: 10;
+  }
+  /* Poster overlay on hover */
+  .poster:hover .overlay {
+    opacity: 1;
+  }
+  .overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(20,20,20,0.9) 0%, transparent 80%);
+    color: white;
+    padding: 10px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    font-size: 0.9rem;
+    border-radius: 0 0 5px 5px;
+  }
+  /* Modal player */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 3000;
+    left: 0; top: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85);
+    justify-content: center;
+    align-items: center;
+  }
+  .modal-content {
+    position: relative;
+    width: 80%;
+    max-width: 900px;
+    background: #000;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .modal-content video {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .modal-close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 28px;
+    font-weight: 700;
+    color: white;
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.3s ease;
+    z-index: 2;
+  }
+  .modal-close:hover {
+    color: #e50914;
+  }
+  /* Responsive */
+  @media (max-width: 768px) {
+    .hero-content {
+      max-width: 90%;
+    }
+    .hero h1 {
+      font-size: 2rem;
+    }
+    .row-posters {
+      padding: 10px 5px 10px 5px;
+    }
+    .poster {
+      min-width: 120px;
+      max-width: 120px;
+    }
+  }
+  #aerialShotsSection .row-posters {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  justify-content: center;      /* Center the grid itself */
+  justify-items: center;        /* Center items in each column */
+  align-items: start;
+  height: auto;
+  padding: 30px 0 30px 0;
+  margin: 0 auto;               /* Center the grid in its container */
+  max-width: 700px;             /* Prevents grid from stretching too wide */
+}
+#aerialShotsSection .poster {
+  min-width: 320px;
+  max-width: 320px;
+  min-height: 180px;
+  max-height: 180px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  background: #181818;
+  margin: 0;
+}
+#compilationSection .row-posters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  justify-content: flex-start; /* Align posters to the left */
+  align-items: flex-start;
+  padding: 30px 0 30px 0;
+}
+
+#compilationSection .poster {
+  min-width: 180px;
+  max-width: 180px;
+  min-height: 320px;
+  max-height: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  background: #181818;
+  margin: 0;
+  overflow: hidden;
+}
+
+#compilationSection .poster img {
+  width: 100%;
+  height: 320px;
+  object-fit: cover;
+  border-radius: 12px 12px 0 0;
+}
+
+#compilationSection,
+#aerialShotsSection {
+  margin-bottom: 0;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+#aerialShotsSection {
+  margin-top: 0;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+main > .row {
+  margin-bottom: 0;
+}
+
+#aerialShotsSection .row-posters {
+  margin-top: 0;
+}
+</style>
+</head>
+<body>
+  <nav class="nav" role="navigation" aria-label="Primary">
+    <div class="logo" aria-label="Drone Shots" tabindex="0">Drone Shots</div>
+    <ul>
+      <li tabindex="0">Home</li>
+      <li tabindex="0">Aerial Videos</li>
+      <li tabindex="0"><a href="#" id="aerialShotsTab">Aerial Shots</a></li>
+      <li tabindex="0">Specific Locations</li>
+      <li tabindex="0">My List</li>
+    </ul>
+  </nav>
+
+ <section class="hero" 
+         style="background-image: url('https://www.phtourguide.com/wp-content/uploads/2010/07/DSC_3779.jpg');"
+         aria-label="Featured movie: Lake Danao Rice Field">
+  <div class="hero-content">
+      <h1>Lake Danao Rice Field</h1
+      <p>Drone Shot Captured at Lake Danao Rice Fields.</p>
+      <button id="playHeroBtn" aria-label="Watch Drone Shots">▶ Watch</button>
+    </div>
+</section>
+  <main>
+    <section class="row" aria-label="Drone Shots Compilation" id="compilationSection">
+      <h2>Drone Shots Compilation</h2>
+      <div class="row-posters">
+        <div class="poster" tabindex="0" data-video="https://www.threads.com/@klein_allys0n/post/DEr76E5PbmT?xmt=AQF0yJKKJ_810F4Tla5Z8DhRlmlI__nRrcmqZRuykH6uAw" aria-label="Play Lake Danao Rice Fields">
+          <img src="images/cd91c075-a163-4473-9689-8d6016710e41.jpg" alt="Lake Danao Rice Fields" />
+          <div class="overlay">Lake Danao Rice Fields</div>
+        </div>
+        <div class="poster" tabindex="0" data-video="https://www.threads.com/@klein_allys0n/post/DEcG8IEPrfT?xmt=AQF05C6ku1WLgNdaxpZce-MdLWpblnESXE_QX0dIIljmrg" aria-label="Play CTU Fish Farm">
+          <img src="images/d041a894-0ea9-40fc-986f-5a9ed4925474.jpg" alt="CTU Fish Farm" />
+          <div class="overlay">CTU Fish Farm</div>
+        </div>
+        <div class="poster" tabindex="0" data-video="https://www.tiktok.com/@kleinallyson/video/7456418999543418119?is_from_webapp=1&sender_device=pc&web_id=7473101509917066753" aria-label="Play Poro Port">
+          <img src="images/00318bed-d19a-4b92-a066-f17a8f77d91c.jpg" alt="Poro Port" />
+          <div class="overlay">Poro Port</div>
+        </div>
+        <div class="poster" tabindex="0" data-video="https://www.threads.com/@klein_allys0n/post/DEcG29YPmqj?xmt=AQF0K-dHAplOqa-7TriTGMbRGYXXuEtQnI1cjgzPwvrS3A" aria-label="Play San Francisco Bay">
+          <img src="images/b7acd8b6-68b3-41a3-822d-626681151662.jpg" alt="San Francisco Bay" />
+          <div class="overlay">San Francisco Bay</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- (Removed code and anything similar to it as requested) -->
+    <section class="row" id="aerialShotsSection" aria-label="Aerial Shots" style="display:none;">
+  <h2>Aerial Shots</h2>
+  <div class="row-posters">
+    <div class="poster">
+      <img src="images/llkl/1f7bb79c-f9e2-4eaf-af82-ce6855f835a6.jpg" alt="Lake Danao" />
+      <div class="overlay">Aerial Shot 1</div>
+    </div>
+    <div class="poster">
+      <img src="images/llkl/4e22528e-4ac5-4759-8214-820373d602e9.jpg" alt="Taliwangbas" />
+      <div class="overlay">Aerial Shot 2</div>
+    </div>
+    <div class="poster">
+      <img src="images/llkl/35b08e2b-3c67-4a1d-951c-35567af65909.jpg" alt="Talisay North Pob." />
+      <div class="overlay">Aerial Shot 3</div>
+    </div>
+    <div class="poster">
+      <img src="images/llkl/65e1f133-41c3-4345-b74e-ad26afb4e711.jpg" alt="Bay Walk" />
+      <div class="overlay">Aerial Shot 4</div>
+    </div>
+    <div class="poster">
+      <img src="images/llkl/76dee959-2d29-4f0a-b7c6-c87d691b15ea.jpg" alt="Santiago Bay" />
+      <div class="overlay">Aerial Shot 5</div>
+    </div>
+    <div class="poster">
+      <img src="images/llkl/a7b2f093-1ee0-49e9-b0d7-94464bde29f0.jpg" alt="Santiago Bay" />
+      <div class="overlay">Aerial Shot 6</div>
+    </div>
+    <div class="poster">
+      <img src="images/llkl/b79d06e2-4a48-4aae-8000-c0e5d6e2e863.jpg" alt="Lake Danao" />
+      <div class="overlay">Aerial Shot 7</div>
+    </div>
+    <div class="poster">
+      <img src="images/e7265821-a450-404b-96ef-fd8c477a8630.jpg" alt="Talisay North Pob" />
+      <div class="overlay">Aerial Shot 8</div>
+    </div>
+  </div>
+</section>
+  </main>
+
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalDesc" tabindex="-1" id="videoModal">
+    <div class="modal-content">
+      <span class="modal-close" role="button" aria-label="Close video player" tabindex="0">&times;</span>
+      <video id="modalVideo" controls autoplay></video>
+    </div>
+  </div>
+  <div id="backButton" style="
+  display: flex;
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 4000;
+  cursor: pointer;
+  font-size: 18px;
+  color: white;
+  background: rgba(20,20,20,0.8);
+  border: none;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+">
+  &larr;
+</div>
+
+<script>
+
+  const modal = document.getElementById('videoModal');
+  const modalVideo = document.getElementById('modalVideo');
+  const closeModalBtn = modal.querySelector('.modal-close');
+  const playHeroBtn = document.getElementById('playHeroBtn');
+  const backButton = document.getElementById('backButton');
+
+  // Show back button in fullscreen (image or video)
+  function showBackButton() {
+    backButton.style.display = 'flex';
+  }
+  function hideBackButton() {
+    backButton.style.display = 'none';
+  }
+
+  function openVideoModal(videoUrl, title) {
+    modalVideo.src = videoUrl;
+    modalVideo.setAttribute('title', title);
+    modal.style.display = 'flex';
+    modal.focus();
+    
+    setTimeout(() => {
+      if (modalVideo.requestFullscreen) {
+        modalVideo.requestFullscreen();
+      } else if (modalVideo.webkitRequestFullscreen) { // Safari
+        modalVideo.webkitRequestFullscreen();
+      } else if (modalVideo.msRequestFullscreen) { // IE11
+        modalVideo.msRequestFullscreen();
+      }
+    }, 200);
+  }
+
+ 
+  function closeModal() {
+    modal.style.display = 'none';
+    modalVideo.pause();
+    modalVideo.currentTime = 0;
+    modalVideo.src = '';
+    // Exit fullscreen if open
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else if (document.webkitFullscreenElement) {
+      document.webkitExitFullscreen();
+    } else if (document.msFullscreenElement) {
+      document.msExitFullscreen();
+    }
+  }
+
+  closeModalBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      closeModal();
+    }
+  });
+  window.addEventListener('keydown', (e) => {
+    if (e.key === "Escape" && modal.style.display === "flex") {
+      closeModal();
+    }
+  });
+
+  document.querySelectorAll('.poster').forEach(poster => {
+    poster.addEventListener('click', () => {
+      const videoUrl = poster.getAttribute('data-video');
+      if (videoUrl) {
+        window.open(videoUrl, '_blank');
+      }
+    });
+    poster.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        poster.click();
+      }
+    });
+  });
+  playHeroBtn.addEventListener('click', () => {
+    const videoUrl = 'videos/a6b3eb3e-1398-49b0-959f-97f245138d88.mp4';
+    openVideoModal(videoUrl, 'Stranger Things Trailer');
+  });
+function showSection(sectionId) {
+  document.querySelectorAll('.row').forEach(section => {
+    if (section.id === sectionId) {
+      section.classList.remove('hide');
+      section.style.display = '';
+      setTimeout(() => {
+        section.style.opacity = '1';
+        section.style.visibility = 'visible';
+      }, 10);
+    } else {
+      section.classList.add('hide');
+      setTimeout(() => {
+        section.style.display = 'none';
+      }, 500);
+    }
+  });
+}
+document.getElementById('aerialShotsTab').addEventListener('click', function(e) {
+  e.preventDefault();
+  showSection('aerialShotsSection');
+});
+
+document.querySelector('li:nth-child(1)').addEventListener('click', function(e) {
+  showSection('compilationSection');
+});
+
+  // For modal video fullscreen
+  modalVideo.addEventListener('fullscreenchange', () => {
+    if (document.fullscreenElement) {
+      showBackButton();
+    } else {
+      hideBackButton();
+    }
+  });
+  modalVideo.addEventListener('webkitfullscreenchange', () => {
+    if (document.webkitFullscreenElement) {
+      showBackButton();
+    } else {
+      hideBackButton();
+    }
+  });
+  modalVideo.addEventListener('msfullscreenchange', () => {
+    if (document.msFullscreenElement) {
+      showBackButton();
+    } else {
+      hideBackButton();
+    }
+  });
+
+  // For aerial image fullscreen
+  document.querySelectorAll('#aerialShotsSection .poster img').forEach(img => {
+    img.style.cursor = "zoom-in";
+    img.addEventListener('click', function () {
+      if (img.requestFullscreen) {
+        img.requestFullscreen();
+      } else if (img.webkitRequestFullscreen) {
+        img.webkitRequestFullscreen();
+      } else if (img.msRequestFullscreen) {
+        img.msRequestFullscreen();
+      }
+    });
+
+    // Listen for fullscreen changes on each image
+    img.addEventListener('fullscreenchange', () => {
+      if (document.fullscreenElement) {
+        showBackButton();
+      } else {
+        hideBackButton();
+      }
+    });
+    img.addEventListener('webkitfullscreenchange', () => {
+      if (document.webkitFullscreenElement) {
+        showBackButton();
+      } else {
+        hideBackButton();
+      }
+    });
+    img.addEventListener('msfullscreenchange', () => {
+      if (document.msFullscreenElement) {
+        showBackButton();
+      } else {
+        hideBackButton();
+      }
+    });
+  });
+
+  // Back button exits fullscreen
+  backButton.addEventListener('click', () => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else if (document.webkitFullscreenElement) {
+      document.webkitExitFullscreen();
+    } else if (document.msFullscreenElement) {
+      document.msExitFullscreen();
+    }
+  });
+</script>
+</body>
+</html>
